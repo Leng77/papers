@@ -1,14 +1,22 @@
-<ul>
+<ul class="incremental">
 <li><a href="#panoptic-polarnet">Panoptic-polarnet</a>
-<ul>
+<ul class="incremental">
 <li><a href="#网络流程">网络流程</a></li>
 <li><a href="#总结">总结</a></li>
 </ul></li>
 <li><a href="#panoptic-phnet">Panoptic-PHNet</a>
-<ul>
+<ul class="incremental">
 <li><a href="#网络流程-1">网络流程</a></li>
 <li><a href="#总结-1">总结</a></li>
 <li><a href="#phnet与polarnet的区别">PHNet与Polarnet的区别</a></li>
+</ul></li>
+<li><a
+href="#edge-aware-3d-instance-segmentation-network-with-intelligent-semantic-prior基于智能语义先验的边缘感知三维实例分割网络ease">Edge-Aware
+3D Instance Segmentation Network with Intelligent Semantic
+Prior（基于智能语义先验的边缘感知三维实例分割网络，EASE）</a>
+<ul class="incremental">
+<li><a href="#网络流程-2">网络流程</a></li>
+<li><a href="#智能语义先验方法总结">智能语义先验方法总结</a></li>
 </ul></li>
 </ul>
 <h1 id="panoptic-polarnet">Panoptic-polarnet</h1>
@@ -19,7 +27,7 @@ href="./1/panoptic-polarnet.pdf">Panoptic-polarnet.pdf</a></em></p>
 <figcaption aria-hidden="true">Panoptic-polarnet</figcaption>
 </figure>
 <h2 id="网络流程">网络流程</h2>
-<ol type="1">
+<ol class="incremental" type="1">
 <li><strong>语义分支：</strong> 首先网络对每个 BEV
 网格（像素）给出类别概率（包括“thing”和“stuff”）。</li>
 <li><strong>实例分支 – 中心热图：</strong>
@@ -35,7 +43,7 @@ class="math inline"><em>ĉ</em></span>(𝑝)=𝑝+Δ𝑝
 对于聚成的一簇点（一个实例），再看这些点在语义分支上的类别概率，取多数票作为该实例的最终类别。</li>
 </ol>
 <h2 id="总结">总结</h2>
-<ul>
+<ul class="incremental">
 <li>语义头是为了每个点得到类别，但不区分实例。</li>
 <li>实例头为了每个点得偏移向量和中心热图，确定“投票”到哪个实例中心。</li>
 <li>聚类是为了拿到每个实例的簇，再看这些点的语义预测，多数投票决定该实例到底是哪一类。</li>
@@ -48,50 +56,66 @@ href="./1/Panoptic-PHNet2205.07002v1.pdf">Panoptic-PHNet.pdf</a></em></p>
 <figcaption aria-hidden="true">Panoptic-PHNet</figcaption>
 </figure>
 <h2 id="网络流程-1">网络流程</h2>
-<p><strong>1. 点云预处理与体素化</strong> *
-将原始稀疏LiDAR点云P={(x,y,z,r)}按极坐标（或柱状）划分到固定尺寸的体素格，得到形状为(𝐻<sub>𝑣</sub>,𝑊<sub>𝑣</sub>,D<sub>𝑣</sub>)的体素栅格。
-* 每个体素内部使用简化 PointNet（共享 MLP +
-max‑pool）提取𝐶<sub>𝑣</sub>维局部特征，生成体素特征图F<sub>𝑣</sub>。</p>
-<p><strong>2. BEV 特征映射与骨干网络</strong> *
-将体素特征F<sub>𝑣</sub>沿高度轴投影到BEV平面，得到𝐻×𝑊×𝐶<sub>𝑣</sub>的BEV特征图。
-* 输入到 2D U‑Net 编码器–解码器骨干，产生多尺度上下文特征。 *
-将解码器中间特征重映射回体素层，与原始体素特征拼接，进一步融合细粒度与全局上下文。</p>
-<p><strong>3. 多任务预测头</strong> * <strong>语义头：</strong> *
-对骨干BEV特征输出每个BEV网格的𝑉类别。 * Softmax → 每点类别概率 →
-生成语义分割预测</p>
-<ul>
-<li><strong>实例头：</strong>
-<ul>
-<li>对同一特征图回归每点到其所属实例中心的偏移向量Δ𝑝(KNN–Transformer)</li>
-<li>不额外学习中心热图，而是后续通过 Clustering Pseudo Heatmap (CPH)
-生成伪热图。</li>
+<p><strong>1. 点云预处理与体素化</strong></p>
+<ul class="incremental">
+<li><p>将原始稀疏LiDAR点云P={(x,y,z,r)}按极坐标（或柱状）划分到固定尺寸的体素格，得到形状为(𝐻<sub>𝑣</sub>,𝑊<sub>𝑣</sub>,D<sub>𝑣</sub>)的体素栅格。</p></li>
+<li><p>每个体素内部使用简化 PointNet（共享 MLP +
+max‑pool）提取𝐶<sub>𝑣</sub>维局部特征，生成体素特征图F<sub>𝑣</sub>。</p></li>
+</ul>
+<p><strong>2. BEV 特征映射与骨干网络</strong></p>
+<ul class="incremental">
+<li><p>将体素特征F<sub>𝑣</sub>沿高度轴投影到BEV平面，得到𝐻×𝑊×𝐶<sub>𝑣</sub>的BEV特征图。</p></li>
+<li><p>输入到 2D U‑Net
+编码器–解码器骨干，产生多尺度上下文特征。</p></li>
+<li><p>将解码器中间特征重映射回体素层，与原始体素特征拼接，进一步融合细粒度与全局上下文。</p></li>
+</ul>
+<p><strong>3. 多任务预测头</strong></p>
+<ul class="incremental">
+<li><p><strong>语义头：</strong></p>
+<ul class="incremental">
+<li><p>对骨干BEV特征输出每个BEV网格的𝑉类别。</p></li>
+<li><p>Softmax → 每点类别概率 → 生成语义分割预测</p></li>
+</ul></li>
+<li><p><strong>实例头：</strong></p>
+<ul class="incremental">
+<li><p>对同一特征图回归每点到其所属实例中心的偏移向量Δ𝑝(KNN–Transformer)</p></li>
+<li><p>不额外学习中心热图，而是后续通过 Clustering Pseudo Heatmap (CPH)
+生成伪热图。</p></li>
 </ul></li>
 </ul>
-<p><strong>4. CPH 伪热图 &amp; Center Grouping</strong> *
-<strong>偏移平移：</strong> 将每个“thing”点𝑝按预测偏移<span
+<p><strong>4. CPH 伪热图 &amp; Center Grouping</strong></p>
+<ul class="incremental">
+<li><p><strong>偏移平移：</strong> 将每个“thing”点𝑝按预测偏移<span
 class="math inline">$\hat{Δ𝑝}$</span>(𝑝)平移到<span
 class="math inline"><em>ĉ</em></span>(𝑝)=𝑝+<span
-class="math inline">$\hat{Δ𝑝}$</span>(𝑝) * <strong>伪热图生成：</strong>
-将所有平移后点投影到 BEV 网格，以每格点数作为热度，形成“伪中心热图”。 *
-<strong>峰值提取：</strong> 在伪热图上做 2D
-窗口式最大池化，提取所有局部峰值位置作为候选中心集合 {𝑐<sub>𝑖</sub>′}。
-* <strong>冗余中心合并：</strong>
+class="math inline">$\hat{Δ𝑝}$</span>(𝑝)</p></li>
+<li><p><strong>伪热图生成：</strong> 将所有平移后点投影到 BEV
+网格，以每格点数作为热度，形成“伪中心热图”。</p></li>
+<li><p><strong>峰值提取：</strong> 在伪热图上做 2D
+窗口式最大池化，提取所有局部峰值位置作为候选中心集合
+{𝑐<sub>𝑖</sub>′}。</p></li>
+<li><p><strong>冗余中心合并：</strong>
 按照类别依窗口内点数做合并，并对距离小于类别特定半径的中心对进行合并，得到最终中心集合
-{𝑐<sub>𝑖</sub>}。</p>
-<p><strong>5. 实例分配与输出映射</strong> * <strong>前景筛选：</strong>
-用语义预测筛出所有“thing”类点集合。 * <strong>最近中心分配：</strong>
+{𝑐<sub>𝑖</sub>}。</p></li>
+</ul>
+<p><strong>5. 实例分配与输出映射</strong></p>
+<ul class="incremental">
+<li><p><strong>前景筛选：</strong>
+用语义预测筛出所有“thing”类点集合。</p></li>
+<li><p><strong>最近中心分配：</strong>
 对每个前景点𝑝,计算其投票后中心<span
 class="math inline"><em>ĉ</em></span>(𝑝)与所有<span
-class="math inline"><em>c</em></span><sub>𝑖</sub>的距离，分配给最近中心，得到实例ID。
-* <strong>实例类别确定：</strong>
-对每个实例簇内点的语义概率做多数投票，决定该实例的类别标签。 *
-<strong>映射回点云：</strong>
-将BEV网格上的类别和实例ID按原始投影索引赋回到每个3D点，输出完整的Panoptic分割结果。</p>
+class="math inline"><em>c</em></span><sub>𝑖</sub>的距离，分配给最近中心，得到实例ID。</p></li>
+<li><p><strong>实例类别确定：</strong>
+对每个实例簇内点的语义概率做多数投票，决定该实例的类别标签。</p></li>
+<li><p><strong>映射回点云：</strong>
+将BEV网格上的类别和实例ID按原始投影索引赋回到每个3D点，输出完整的Panoptic分割结果。</p></li>
+</ul>
 <h2 id="总结-1">总结</h2>
-<ul>
+<ul class="incremental">
 <li><strong>输入：</strong> 稀疏 LiDAR 点云 → Voxel Encoder → BEV 编码 +
 2D U‑Net → 得到：
-<ul>
+<ul class="incremental">
 <li>语义 logits → Softmax → 每点类别预测；</li>
 <li>偏移向量场 → 将“thing”点平移至<span
 class="math inline"><em>ĉ</em></span>=𝑝+<span
@@ -106,9 +130,9 @@ ID；</li>
 Panoptic 结果。</li>
 </ul>
 <h2 id="phnet与polarnet的区别">PHNet与Polarnet的区别</h2>
-<ul>
+<ul class="incremental">
 <li><p><strong>中心热图的生成方式</strong></p>
-<ul>
+<ul class="incremental">
 <li><strong>PolarNet：</strong>
 在实例头里额外学习一个“中心热图”分支，网络需同时回归中心热图和偏移向量。</li>
 <li><strong>PHNet：</strong>
@@ -117,30 +141,124 @@ Pseudo
 Heatmap），再做简单的窗口最大池化提取峰值，完全不需额外学习热图</li>
 </ul></li>
 <li><p><strong>偏移向量的回归网络</strong></p>
-<ul>
+<ul class="incremental">
 <li><strong>PolarNet：</strong> 典型地用轻量
 MLP/卷积层对每点做偏移回归。</li>
 <li><strong>PHNet：</strong> 引入 KNN‑Transformer
 模块，以每点及其近邻构建局部图，在图上做自注意力计算，显著提升偏移回归精度，从而让伪热图峰值更集中、实例分割更精确</li>
 </ul></li>
 <li><p><strong>冗余中心的合并策略</strong></p>
-<ul>
+<ul class="incremental">
 <li><strong>PolarNet：</strong> 仅用 NMS＋Top‑k
 提取中心，后续靠投票自然分簇，对过大实例可能产生重复中心。</li>
 <li><strong>PHNet：</strong> 在伪热图提峰后，增加 Center Grouping
 模块，根据峰值周围点密度和类别特定的合并半径，将过于接近的中心合并，确保每个实例只有一个中心，提升实例完整性</li>
 </ul></li>
 <li><p><strong>骨干与特征融合</strong></p>
-<ul>
+<ul class="incremental">
 <li><strong>PolarNet：</strong> 典型的单一极坐标BEV‑U‑Net。</li>
 <li><strong>PHNet：</strong> 在BEV
 U‑Net之上，还将中间多尺度BEV特征重映射回体素层，与细粒度PointNet提取的体素特征拼接融合，兼顾全局上下文与局部细节，从而提高语义分割和实例分割效果</li>
 </ul></li>
 <li><p><strong>性能与效率</strong></p>
-<ul>
+<ul class="incremental">
 <li><strong>PolarNet：</strong> 实时
 (~0.08 s/帧)，PQ ≈ 59.1%（SemanticKITTI）。</li>
 <li><strong>PHNet：</strong> 依旧满足 10 Hz 实时需求，同时 PQ
 提升至 61.5%。</li>
+</ul></li>
+</ul>
+<h1
+id="edge-aware-3d-instance-segmentation-network-with-intelligent-semantic-prior基于智能语义先验的边缘感知三维实例分割网络ease">Edge-Aware
+3D Instance Segmentation Network with Intelligent Semantic
+Prior（基于智能语义先验的边缘感知三维实例分割网络，EASE）</h1>
+<p><strong><em>论文链接</em></strong> <em><a
+href="./1/Roh_Edge-Aware_3D_Instance_Segmentation_Network_with_Intelligent_Semantic_Prior_CVPR_2024_paper.pdf">Roh_Edge-Aware_3D_Instance_Segmentation_Network_with_Intelligent_Semantic_Prior_CVPR_2024_paper.pdf</a></em></p>
+<figure>
+<img src="./images/EASE.png" alt="EASE" />
+<figcaption aria-hidden="true">EASE</figcaption>
+</figure>
+<h2 id="网络流程-2">网络流程</h2>
+<p><strong>1. 点云预处理与体素化</strong></p>
+<ul class="incremental">
+<li><p>对原始彩色点云𝑃在三维空间划定体素网格（Voxel），得到尺寸为
+(𝐻<sub>𝑣</sub>,𝑊<sub>𝑣</sub>,𝐷<sub>𝑣</sub>)的稀疏体素。</p></li>
+<li><p>每个体素内使用简化版PointNet（共享 MLP +
+max‑pool）汇聚该体素内的点特征，得到体素特征图{F<sub>𝑣</sub>}</p></li>
+</ul>
+<p><strong>2. SparseConv U‑Net 骨干提取多尺度特征</strong></p>
+<p>将体素特征输入一棵 SparseConv
+U‑Net，沿空间下采样和上采样共提取若干尺度的特征{𝐹<sub>𝑖</sub>}<span
+class="math inline"><sub><em>𝑖</em> = 0</sub><sup>4</sup></span>，其中<span
+class="math inline"><em>𝐹</em><sub>0</sub></span>分辨率最高，保留最丰富的细节信息</p>
+<p><strong>3. 边缘感知分支（Edge Prediction Module）</strong></p>
+<ul class="incremental">
+<li><p><strong>边缘标签生成：</strong>
+在训练集上对每个点做KNN邻域统计，如果邻居点存在多于一个实例
+ID，则标为“伪边缘”</p></li>
+<li><p><strong>边缘回归头：</strong> 从<span
+class="math inline"><em>𝐹</em><sub>0</sub></span>​上分出一个小型MLP，回归体素级边缘概率图<span
+class="math inline"><em>Ê</em></span>，并用加权 BCE
+损失与伪边缘标签对齐</p></li>
+</ul>
+<p><strong>4. Mask Transformer 解码器（3× Mask Module + Query
+Refinement）</strong></p>
+<ul class="incremental">
+<li><p><strong>初始化查询：</strong> 定义<span
+class="math inline"><em>𝑁</em><sub><em>𝑞</em></sub></span>条可学习的实例查询。</p></li>
+<li><p><strong>3轮迭代：</strong> 每轮包括</p>
+<ul class="incremental">
+<li><p><strong>Mask Module：</strong> 将所有查询与<span
+class="math inline"><em>𝐹</em><sub>0</sub></span>做点乘并sigmoid，生成一组前景掩码。</p></li>
+<li><p><strong>Query Refinement：</strong> 对每个查询做masked
+cross‑attention（掩码引导）融合<span
+class="math inline"><em>𝐹</em><sub><em>𝑖</em></sub></span>（多尺度特征），再做
+self‑attention 更新自身特征</p></li>
+</ul></li>
+</ul>
+<p><strong>5. 智能语义先验注入（Semantic Guidance）</strong></p>
+<ul class="incremental">
+<li><p>在每次 Query Refinement 后，对更新后的查询特征𝑄:</p>
+<ul class="incremental">
+<li><p>用线性分类头预测类别𝑐</p></li>
+<li><p>将对应类别的 CLIP 文本描述通过 CLIP
+模型映射为语义嵌入𝑇。</p></li>
+<li><p>将𝑇与𝑄通道拼接并过小型
+MLP，输出增强后的查询特征，带入下一轮迭代</p></li>
+</ul></li>
+</ul>
+<p><strong>6. 实例掩码与类别预测</strong></p>
+<ul class="incremental">
+<li><p>最终每条查询都会输出一张体素级掩码和一个类别分数。</p></li>
+<li><p>在训练时，使用Hungarian
+Matching将预测掩码与真值实例一一对应，并分别计算BCE（掩码）和
+cross‑entropy（分类）损失。</p></li>
+</ul>
+<p><strong>7. 映射回原始点云 &amp; 后处理</strong></p>
+<ul class="incremental">
+<li><p>将体素掩码投影回原始点云，每个点取对应体素格的标签和实例
+ID。</p></li>
+<li><p>对预测边缘图可选地做边界精修（如
+CRF），提高相邻实例的分割质量。</p></li>
+<li><p>最终输出每个点的(语义类别,实例ID)</p></li>
+</ul>
+<h2 id="智能语义先验方法总结">智能语义先验方法总结</h2>
+<ul class="incremental">
+<li><p><strong>模型先猜一次类别</strong></p>
+<ul class="incremental">
+<li>在每轮掩码生成之后，模型会给每个“查询”（query）一个类别猜测，比如“这是辆车”或“这是把椅子”。</li>
+</ul></li>
+<li><p><strong>把类别名字变成向量</strong></p>
+<ul class="incremental">
+<li>它把猜到的类别名称（如“car”、“chair”）当一句话输入 CLIP，让 CLIP
+输出一个“文字向量”，这是 CLIP 预先学到的文字语义知识。</li>
+</ul></li>
+<li><p><strong>和视觉特征拼一起</strong></p>
+<ul class="incremental">
+<li>然后把这个文字向量和模型刚才算出的视觉特征拼在一起，好像给视觉特征加上了一层“语义标签”，让它知道自己不仅要关心形状、颜色，还要对“车”或“椅子”这些概念有意识。</li>
+</ul></li>
+<li><p><strong>带着语义跑下一轮</strong></p>
+<ul class="incremental">
+<li>拼好之后的混合特征再送进下一轮掩码生成，这样模型在分割实例的时候，就会同时参考“我看起来像车”＋“我知道车是啥样”这两重信息，更不容易把看着像椅子的车门当成椅子，或者把椅子腿误分成车轮。</li>
 </ul></li>
 </ul>

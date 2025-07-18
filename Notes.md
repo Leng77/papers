@@ -5,6 +5,9 @@
   - [网络流程](#网络流程-1)
   - [总结](#总结-1)
   - [PHNet与Polarnet的区别](#phnet与polarnet的区别)
+- [Edge-Aware 3D Instance Segmentation Network with Intelligent Semantic Prior（基于智能语义先验的边缘感知三维实例分割网络，EASE）](#edge-aware-3d-instance-segmentation-network-with-intelligent-semantic-prior基于智能语义先验的边缘感知三维实例分割网络ease)
+  - [网络流程](#网络流程-2)
+  - [智能语义先验方法总结](#智能语义先验方法总结)
 
 # Panoptic-polarnet
 
@@ -34,44 +37,63 @@
 ![Panoptic-PHNet](./images/Panoptic-PHNet.png)
 
 ## 网络流程
+
 **1. 点云预处理与体素化**
+
 * 将原始稀疏LiDAR点云P={(x,y,z,r)}按极坐标（或柱状）划分到固定尺寸的体素格，得到形状为(𝐻~𝑣~,𝑊~𝑣~,D~𝑣~)的体素栅格。
+
 * 每个体素内部使用简化 PointNet（共享 MLP + max‑pool）提取𝐶~𝑣~维局部特征，生成体素特征图F~𝑣~。
 
 **2. BEV 特征映射与骨干网络**
+
 * 将体素特征F~𝑣~沿高度轴投影到BEV平面，得到𝐻×𝑊×𝐶~𝑣~的BEV特征图。
+
 * 输入到 2D U‑Net 编码器–解码器骨干，产生多尺度上下文特征。
+
 * 将解码器中间特征重映射回体素层，与原始体素特征拼接，进一步融合细粒度与全局上下文。
 
 **3. 多任务预测头**
+
 * **语义头：**
+
   * 对骨干BEV特征输出每个BEV网格的𝑉类别。
+
   * Softmax → 每点类别概率 → 生成语义分割预测
 
 * **实例头：**
+
   * 对同一特征图回归每点到其所属实例中心的偏移向量Δ𝑝(KNN–Transformer)
+
   * 不额外学习中心热图，而是后续通过 Clustering Pseudo Heatmap (CPH) 生成伪热图。
 
 **4. CPH 伪热图 & Center Grouping**
+
 * **偏移平移：** 将每个“thing”点𝑝按预测偏移$\hat{Δ𝑝}$(𝑝)平移到$\hat{c}$(𝑝)=𝑝+$\hat{Δ𝑝}$(𝑝)
+
 * **伪热图生成：** 将所有平移后点投影到 BEV 网格，以每格点数作为热度，形成“伪中心热图”。
+
 * **峰值提取：** 在伪热图上做 2D 窗口式最大池化，提取所有局部峰值位置作为候选中心集合 {𝑐~𝑖~′}。
+
 * **冗余中心合并：** 按照类别依窗口内点数做合并，并对距离小于类别特定半径的中心对进行合并，得到最终中心集合 {𝑐~𝑖~}。
 
 **5. 实例分配与输出映射**
+
 * **前景筛选：** 用语义预测筛出所有“thing”类点集合。
+
 * **最近中心分配：** 对每个前景点𝑝,计算其投票后中心$\hat{c}$(𝑝)与所有$c$~𝑖~的距离，分配给最近中心，得到实例ID。
+
 * **实例类别确定：** 对每个实例簇内点的语义概率做多数投票，决定该实例的类别标签。
+
 * **映射回点云：** 将BEV网格上的类别和实例ID按原始投影索引赋回到每个3D点，输出完整的Panoptic分割结果。
 
 ## 总结
 
-* **输入：** 稀疏 LiDAR 点云 → Voxel Encoder → BEV 编码 + 2D U‑Net → 得到：
+* __输入：__ 稀疏 LiDAR 点云 → Voxel Encoder → BEV 编码 + 2D U‑Net → 得到：
   * 语义 logits → Softmax → 每点类别预测；
   * 偏移向量场 → 将“thing”点平移至$\hat{c}$=𝑝+$\hat{Δ𝑝}$
-* **聚类：** 投影平移后点 → 生成 CPH → max‑pool 提取中心 → Center Grouping → 最终中心集合{$c_i$}
-* **实例分配:** 每点按最小距离归属最近中心 → 得到实例 ID；
-* **输出：** 结合语义预测与实例 ID，映射至原始点云，产出 Panoptic 结果。
+* __聚类：__ 投影平移后点 → 生成 CPH → max‑pool 提取中心 → Center Grouping → 最终中心集合{$c_i$}
+* __实例分配:__ 每点按最小距离归属最近中心 → 得到实例 ID；
+* __输出：__ 结合语义预测与实例 ID，映射至原始点云，产出 Panoptic 结果。
 
 ## PHNet与Polarnet的区别
 
@@ -96,3 +118,82 @@
   * **PolarNet：** 实时 (~0.08 s/帧)，PQ ≈ 59.1%（SemanticKITTI）。
   * **PHNet：** 依旧满足 10 Hz 实时需求，同时 PQ 提升至 61.5%。
 
+
+
+
+
+# Edge-Aware 3D Instance Segmentation Network with Intelligent Semantic Prior（基于智能语义先验的边缘感知三维实例分割网络，EASE）
+
+**_论文链接_** _[Roh_Edge-Aware_3D_Instance_Segmentation_Network_with_Intelligent_Semantic_Prior_CVPR_2024_paper.pdf](./1/Roh_Edge-Aware_3D_Instance_Segmentation_Network_with_Intelligent_Semantic_Prior_CVPR_2024_paper.pdf)_
+
+![EASE](./images/EASE.png)
+
+## 网络流程
+
+**1. 点云预处理与体素化**
+
+* 对原始彩色点云𝑃在三维空间划定体素网格（Voxel），得到尺寸为 (𝐻~𝑣~,𝑊~𝑣~,𝐷~𝑣~)的稀疏体素。
+
+* 每个体素内使用简化版PointNet（共享 MLP + max‑pool）汇聚该体素内的点特征，得到体素特征图{F~𝑣~}
+
+**2. SparseConv U‑Net 骨干提取多尺度特征**
+
+将体素特征输入一棵 SparseConv U‑Net，沿空间下采样和上采样共提取若干尺度的特征{𝐹~𝑖~}$^4_{𝑖=0}$，其中$𝐹_0$分辨率最高，保留最丰富的细节信息
+
+**3. 边缘感知分支（Edge Prediction Module）**
+
+*  **边缘标签生成：** 在训练集上对每个点做KNN邻域统计，如果邻居点存在多于一个实例 ID，则标为“伪边缘” 
+
+* **边缘回归头：** 从$𝐹_0$​上分出一个小型MLP，回归体素级边缘概率图$\hat{E}$，并用加权 BCE 损失与伪边缘标签对齐
+
+**4. Mask Transformer 解码器（3× Mask Module + Query Refinement）**
+
+* **初始化查询：** 定义$𝑁_𝑞$条可学习的实例查询。
+
+* **3轮迭代：** 每轮包括
+
+  * **Mask Module：** 将所有查询与$𝐹_0$做点乘并sigmoid，生成一组前景掩码。
+
+  * **Query Refinement：** 对每个查询做masked cross‑attention（掩码引导）融合$𝐹_𝑖$（多尺度特征），再做 self‑attention 更新自身特征 
+
+**5. 智能语义先验注入（Semantic Guidance）**
+
+* 在每次 Query Refinement 后，对更新后的查询特征𝑄:
+
+  * 用线性分类头预测类别𝑐
+
+  * 将对应类别的 CLIP 文本描述通过 CLIP 模型映射为语义嵌入𝑇。
+  
+  * 将𝑇与𝑄通道拼接并过小型 MLP，输出增强后的查询特征，带入下一轮迭代 
+
+**6. 实例掩码与类别预测**
+
+* 最终每条查询都会输出一张体素级掩码和一个类别分数。
+
+* 在训练时，使用Hungarian Matching将预测掩码与真值实例一一对应，并分别计算BCE（掩码）和 cross‑entropy（分类）损失。
+
+**7. 映射回原始点云 & 后处理**
+
+* 将体素掩码投影回原始点云，每个点取对应体素格的标签和实例 ID。
+
+* 对预测边缘图可选地做边界精修（如 CRF），提高相邻实例的分割质量。
+
+* 最终输出每个点的(语义类别,实例ID)
+
+## 智能语义先验方法总结
+
+* **模型先猜一次类别**
+
+  * 在每轮掩码生成之后，模型会给每个“查询”（query）一个类别猜测，比如“这是辆车”或“这是把椅子”。
+
+* **把类别名字变成向量**
+
+  * 它把猜到的类别名称（如“car”、“chair”）当一句话输入 CLIP，让 CLIP 输出一个“文字向量”，这是 CLIP 预先学到的文字语义知识。
+
+* **和视觉特征拼一起**
+
+  * 然后把这个文字向量和模型刚才算出的视觉特征拼在一起，好像给视觉特征加上了一层“语义标签”，让它知道自己不仅要关心形状、颜色，还要对“车”或“椅子”这些概念有意识。
+
+* **带着语义跑下一轮**
+
+  * 拼好之后的混合特征再送进下一轮掩码生成，这样模型在分割实例的时候，就会同时参考“我看起来像车”＋“我知道车是啥样”这两重信息，更不容易把看着像椅子的车门当成椅子，或者把椅子腿误分成车轮。
